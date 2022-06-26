@@ -4,16 +4,17 @@ import random
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from agora_token_builder import RtcTokenBuilder
-
+from django.conf import settings
 
 # Create your views here.
 from base.models import Member
 
 
 def token_builder(request):
+    print(settings.AGORA_APPID)
     # Build token with uid
-    appId = "438705e7ad5248b2856f46ddb69d0310"
-    appCertificate = "f7a70ae984ea4de48a00f00f72c717fd"
+    appId = settings.AGORA_APPID
+    appCertificate = settings.AGORA_APPCERTIFICATE
     channelName = request.GET.get('channel')
     name = request.GET.get('name')
     uid = random.randint(1, 233)
@@ -24,7 +25,7 @@ def token_builder(request):
 
     token = RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs)
 
-    member = Member.objects.create(UID=uid, name=name, channel=channelName)
+    Member.objects.create(UID=uid, name=name, channel=channelName)
 
     return JsonResponse({'token': token, 'uid': uid}, safe=False)
 
