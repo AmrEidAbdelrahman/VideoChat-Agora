@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from agora_token_builder import RtcTokenBuilder
 from django.conf import settings
-
+from django.core.cache import cache
 # Create your views here.
 from base.models import Member
 
@@ -24,8 +24,8 @@ def token_builder(request):
     privilegeExpiredTs = now + expiration_duration
 
     token = RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs)
-
     Member.objects.create(UID=uid, name=name, channel=channelName)
+    cache.set(f'{uid}-{channelName}', name, timeout=None)
 
     return JsonResponse({'token': token, 'uid': uid}, safe=False)
 
@@ -39,6 +39,6 @@ def lobby(request):
 
 
 def get_member(request, uid, channel):
-    member = get_object_or_404(Member, UID=uid, channel=channel)
-
-    return JsonResponse({'username': member.name}, safe=False)
+    member = cache.get(f'{uid}-{channel}')
+    print(member)
+    return JsonResponse({'username': member}, safe=False)
